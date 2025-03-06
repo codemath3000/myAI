@@ -28,6 +28,7 @@ const pineconeIndex = pineconeClient.Index(PINECONE_INDEX_NAME);
 
 // Initialize Providers
 const openaiClient = new OpenAI({
+  baseURL: "http://localhost:11434/v1/",
   apiKey: openaiApiKey,
 });
 const anthropicClient = new Anthropic({
@@ -51,8 +52,12 @@ async function determineIntention(chat: Chat): Promise<Intention> {
 }
 
 export async function POST(req: Request) {
-  const { chat } = await req.json();
-
+  const { chat, feedbackMode } = await req.json();
+  
+  if(feedbackMode) {
+    return ResponseModule.respondToFeedbackRequest(chat, providers);
+  }
+    
   const intention: Intention = await determineIntention(chat);
 
   if (intention.type === "question") {

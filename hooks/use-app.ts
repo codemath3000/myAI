@@ -67,7 +67,23 @@ export default function useApp() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ chat: { messages: allMessages } }),
+      body: JSON.stringify({ chat: { messages: allMessages }, feedbackMode: false }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to send message");
+    }
+
+    return response;
+  };
+
+  const fetchAssistantFeedback = async (allMessages: DisplayMessage[]) => {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ chat: { messages: allMessages }, feedbackMode: true }),
     });
 
     if (!response.ok) {
@@ -78,7 +94,12 @@ export default function useApp() {
   };
 
   const handleStreamedMessage = (streamedMessage: StreamedMessage) => {
-    setIndicatorState([]);
+    let ceOld = console.error;
+    console.error = () => {};
+    try {
+      setIndicatorState([]);
+    } catch (setIndicatorException) { }
+    console.error = ceOld;
     setMessages((prevMessages) => {
       const updatedMessages = [...prevMessages];
       const lastMessage = updatedMessages[updatedMessages.length - 1];
@@ -125,10 +146,14 @@ export default function useApp() {
     if (payloads.length === 0) {
       return; // No non-empty payloads
     }
-
+    var combinedPayload = "";
     for (const payload of payloads) {
-      const parsedPayload = JSON.parse(payload);
-
+      combinedPayload += payload + "\n";
+      var parsedPayload = {};
+      try {
+        parsedPayload = JSON.parse(combinedPayload);
+        combinedPayload = "";
+      } catch (parseError) { continue; }
       if (streamedMessageSchema.safeParse(parsedPayload).success) {
         handleStreamedMessage(parsedPayload as StreamedMessage);
       } else if (streamedLoadingSchema.safeParse(parsedPayload).success) {
@@ -155,6 +180,47 @@ export default function useApp() {
 
       const payload = new TextDecoder().decode(value);
       routeResponseToProperHandler(payload);
+    }
+  };
+
+  const handleFeedback = async(e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // var inputString = "Please give feedback to the user in response to the following chat transcript:\n";
+    // for(var i = Math.max(messages.length - 10, 0); i < messages.length; i++) {
+    //   if(messages[i].role == "assistant" && i != 0) inputString += " -------------------------------- Then, you (the AI assistant) provided a response.\n\n";
+    //   else inputString += " -------------------------------- The following message is from the " + messages[i].role + ": " + messages[i].content + "\n\n";
+    // }
+    // var inputString = "Please give feedback to the user, assessing features such as response quality, question quality, overall tone, and correctness. Please only consider the quality of the messages created by the user. Please do not consider or review the quality of the messages created by the assistant. Again, you must only provide feedback about the user's comments; never provide any feedback about yourself, the assistant."
+    setIndicatorState([]);
+    setIsLoading(true);
+    setInput("");
+    const newUserMessage = addUserMessage("Please provide feedback on my chat history using three 0-5 rubric scales.");
+    if (wordCount > WORD_CUTOFF) {
+      addAssistantMessage(WORD_BREAK_MESSAGE, []);
+      setIsLoading(false);
+    } else {
+      setTimeout(() => {
+        // NOTE: This is a hacky way to show the indicator state only after the user message is added.
+        // TODO: Find a better way to do this.
+        setIndicatorState([
+          {
+            status: "Understanding your message",
+            icon: "understanding",
+          },
+        ]);
+      }, 600);
+
+      try {
+        const response = await fetchAssistantFeedback([
+          ...messages,
+          newUserMessage,
+        ]);
+        await processStreamedResponse(response);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -223,6 +289,7 @@ export default function useApp() {
     messages,
     handleInputChange,
     handleSubmit,
+    handleFeedback,
     indicatorState,
     input,
     isLoading,

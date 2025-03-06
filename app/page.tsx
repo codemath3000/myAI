@@ -10,6 +10,7 @@ export default function Chat() {
     messages,
     handleInputChange,
     handleSubmit,
+    handleFeedback,
     input,
     isLoading,
     indicatorState,
@@ -27,6 +28,7 @@ export default function Chat() {
       <ChatInput
         handleInputChange={handleInputChange}
         handleSubmit={handleSubmit}
+        handleFeedback={handleFeedback}
         input={input}
         isLoading={isLoading}
       />

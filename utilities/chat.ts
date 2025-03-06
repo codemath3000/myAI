@@ -41,21 +41,21 @@ export function addSystemMessage(
   return [{ role: "system", content: systemMessage }, ...messages];
 }
 
-export async function embedHypotheticalData(
-  value: string,
-  openai: OpenAI
-): Promise<{ embedding: number[] }> {
-  try {
-    const embedding = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: value,
-    });
-
-    return { embedding: embedding.data[0].embedding };
-  } catch (error) {
-    throw new Error("Error embedding hypothetical data");
-  }
-}
+// export async function embedHypotheticalData(
+//   value: string,
+//   openai: OpenAI
+// ): Promise<{ embedding: number[] }> {
+//   try {
+//     const embedding = await openai.embeddings.create({
+//       model: "text-embedding-ada-002",
+//       input: value,
+//     });
+// 
+//     return { embedding: embedding.data[0].embedding };
+//   } catch (error) {
+//     throw new Error("Error embedding hypothetical data");
+//   }
+// }
 
 // Hypothetical Document Embedding (HyDe)
 export async function generateHypotheticalData(
@@ -88,30 +88,33 @@ export async function generateHypotheticalData(
   }
 }
 
-export async function searchForChunksUsingEmbedding(
-  embedding: number[],
+export async function searchForChunksUsingText(
+  text: string,
   pineconeIndex: any
 ): Promise<Chunk[]> {
   try {
-    const { matches } = await pineconeIndex.query({
-      vector: embedding,
-      topK: QUESTION_RESPONSE_TOP_K,
+    const matches = await pineconeIndex.namespace("").searchRecords({
+      query: {
+        topK: QUESTION_RESPONSE_TOP_K,
+        inputs: { text: text },
+      },
       includeMetadata: true,
     });
 
-    return matches.map((match: any) =>
+    return matches.result.hits.map((match: any) =>
       chunkSchema.parse({
-        text: match.metadata?.text ?? "",
-        pre_context: match.metadata?.pre_context ?? "",
-        post_context: match.metadata?.post_context ?? "",
-        source_url: match.metadata?.source_url ?? "",
-        source_description: match.metadata?.source_description ?? "",
-        order: match.metadata?.order ?? 0,
+        text: match.fields?.text ?? "",
+        pre_context: match.fields?.pre_context ?? "",
+        post_context: match.fields?.post_context ?? "",
+        source_url: match.fields?.source_url ?? "",
+        source_description: match.fields?.source_description ?? "",
+        order: match.fields?.order ?? 0,
       })
     );
   } catch (error) {
+    throw error;
     throw new Error(
-      "Error searching for chunks using embedding. Double check Pinecone index name and API key."
+      "Error searching for chunks using text. Double check Pinecone index name and API key."
     );
   }
 }

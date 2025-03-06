@@ -9,10 +9,10 @@ import {
 } from "@/types";
 import {
   convertToCoreMessages,
-  embedHypotheticalData,
+//  embedHypotheticalData,
   generateHypotheticalData,
   getSourcesFromChunks,
-  searchForChunksUsingEmbedding,
+  searchForChunksUsingText,
   getContextFromSources,
   getCitationsFromChunks,
   buildPromptFromContext,
@@ -28,12 +28,15 @@ import {
 } from "@/configuration/chat";
 import { stripMessagesOfCitations } from "@/utilities/chat";
 import {
+  RESPOND_TO_FEEDBACK_REQUEST_SYSTEM_PROMPT,
   RESPOND_TO_HOSTILE_MESSAGE_SYSTEM_PROMPT,
   RESPOND_TO_QUESTION_BACKUP_SYSTEM_PROMPT,
   RESPOND_TO_QUESTION_SYSTEM_PROMPT,
   RESPOND_TO_RANDOM_MESSAGE_SYSTEM_PROMPT,
 } from "@/configuration/prompts";
 import {
+  FEEDBACK_RESPONSE_PROVIDER,
+  FEEDBACK_RESPONSE_MODEL,
   RANDOM_RESPONSE_PROVIDER,
   RANDOM_RESPONSE_MODEL,
   HOSTILE_RESPONSE_PROVIDER,
@@ -43,12 +46,55 @@ import {
   HOSTILE_RESPONSE_TEMPERATURE,
   QUESTION_RESPONSE_TEMPERATURE,
   RANDOM_RESPONSE_TEMPERATURE,
+  FEEDBACK_RESPONSE_TEMPERATURE,
 } from "@/configuration/models";
 
 /**
  * ResponseModule is responsible for collecting data and building a response
  */
 export class ResponseModule {
+  static async respondToFeedbackRequest(
+    chat: Chat,
+    providers: AIProviders
+  ): Promise<Response> {
+    const PROVIDER_NAME: ProviderName = FEEDBACK_RESPONSE_PROVIDER;
+    const MODEL_NAME: string = FEEDBACK_RESPONSE_MODEL;
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        queueIndicator({
+          controller,
+          status: "Coming up with an answer",
+          icon: "thinking",
+        });
+        const systemPrompt = RESPOND_TO_FEEDBACK_REQUEST_SYSTEM_PROMPT(chat);
+        const strippedMessages: CoreMessage[] = await convertToCoreMessages(
+          stripMessagesOfCitations(chat.messages).slice(-HISTORY_CONTEXT_LENGTH * 5)
+        );
+
+        const citations: Citation[] = [];
+        queueAssistantResponse({
+          controller,
+          providers,
+          providerName: PROVIDER_NAME,
+          messages: strippedMessages,
+          model_name: MODEL_NAME,
+          systemPrompt,
+          citations,
+          error_message: DEFAULT_RESPONSE_MESSAGE,
+          temperature: FEEDBACK_RESPONSE_TEMPERATURE,
+        });
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  }
   static async respondToRandomMessage(
     chat: Chat,
     providers: AIProviders
@@ -160,15 +206,15 @@ export class ResponseModule {
             chat,
             providers.openai
           );
-          const { embedding }: { embedding: number[] } =
-            await embedHypotheticalData(hypotheticalData, providers.openai);
+          // const { embedding }: { embedding: number[] } =
+          //   await embedHypotheticalData(hypotheticalData, providers.openai);
           queueIndicator({
             controller,
             status: "Reading through documents",
             icon: "searching",
           });
-          const chunks: Chunk[] = await searchForChunksUsingEmbedding(
-            embedding,
+          const chunks: Chunk[] = await searchForChunksUsingText(
+            hypotheticalData,
             index
           );
           const sources: Source[] = await getSourcesFromChunks(chunks);

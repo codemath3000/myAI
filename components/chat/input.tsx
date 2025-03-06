@@ -11,6 +11,7 @@ import ChatFooter from "@/components/chat/footer";
 interface ChatInputProps {
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleFeedback: (e: React.MouseEvent<HTMLButtonElement>) => void;
   input: string;
   isLoading: boolean;
 }
@@ -18,6 +19,7 @@ interface ChatInputProps {
 export default function ChatInput({
   handleInputChange,
   handleSubmit,
+  handleFeedback,
   input,
   isLoading,
 }: ChatInputProps) {
@@ -64,6 +66,15 @@ export default function ChatInput({
                 disabled={input.trim() === "" || isLoading}
               >
                 <ArrowUp className="w-5 h-5" />
+              </Button>
+              <Button
+                type="button"
+                className="rounded-full h-10 flex items-center justify-center"
+                style={{marginLeft: "5px"}}
+                disabled={isLoading}
+                onClick={handleFeedback}
+              >
+                Feedback
               </Button>
             </form>
           </Form>

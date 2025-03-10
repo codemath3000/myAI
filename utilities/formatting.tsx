@@ -128,6 +128,7 @@ export function renderCitations(
   children: React.ReactNode | string,
   citations: Citation[]
 ): React.ReactNode {
+  //return children;
   const matchRegex = /(\[\d+\])/g;
 
   // Helper function to process string content
@@ -135,7 +136,7 @@ export function renderCitations(
     const parts = text.split(matchRegex);
     return parts.map((part, index) => {
       const match = part.match(matchRegex);
-      if (match) {
+      if (false && match) {
         const number = parseInt(part.replace(/[\[\]]/g, ""), 10);
         return (
           <CitationCircle
@@ -156,6 +157,7 @@ export function renderCitations(
     }
 
     if (Array.isArray(node)) {
+//      return node;
       return node.map((child, index) => (
         <React.Fragment key={index}>{processChildren(child)}</React.Fragment>
       ));
@@ -172,5 +174,5 @@ export function renderCitations(
     return node;
   };
 
-  return <p className="text-base">{processChildren(children)}</p>;
+  return processChildren(children);//<p className="text-base">{processChildren(children)}</p>;
 }

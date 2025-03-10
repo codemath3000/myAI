@@ -224,6 +224,7 @@ export class ResponseModule {
             icon: "documents",
           });
           const citations: Citation[] = await getCitationsFromChunks(chunks);
+          //throw new Error(JSON.stringify(citations));
           const contextFromSources = await getContextFromSources(sources);
           const systemPrompt =
             RESPOND_TO_QUESTION_SYSTEM_PROMPT(contextFromSources);

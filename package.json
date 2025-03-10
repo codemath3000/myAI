@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^0.0.66",
     "@anthropic-ai/sdk": "^0.33.1",
     "@hookform/resolvers": "^3.9.0",
     "@pinecone-database/pinecone": "^5.1.0",
@@ -52,7 +51,7 @@
     "lucide-react": "^0.447.0",
     "next": "^15.2.1",
     "next-themes": "^0.3.0",
-    "openai": "^4.67.3",
+    "openai": "^4.86.2",
     "react": "^18",
     "react-autolatex": "^2.0.1",
     "react-dom": "^18",

@@ -27,6 +27,7 @@ export function Formatting({ message }: { message: DisplayMessage }) {
       );
     },
     p: ({ children }: { children: React.ReactNode }) => {
+      //console.error(JSON.stringify(message.citations));
       return renderCitations(children, message.citations);
     },
     strong: ({ children }: { children: React.ReactNode }) => {
@@ -35,17 +36,17 @@ export function Formatting({ message }: { message: DisplayMessage }) {
           {renderCitations(children, message.citations)}
         </span>
       );
-    },
+    },/*
     li: ({ children }: { children: React.ReactNode }) => {
       return renderCitations(children, message.citations);
-    },
+    },*/
   };
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
       rehypePlugins={[rehypeKatex]}
       components={components as any}
-      className="gap-3 flex flex-col"
+      className="gap-3" // flex flex-col"
     >
       {processedContent}
     </ReactMarkdown>

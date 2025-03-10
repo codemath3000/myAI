@@ -94,6 +94,8 @@ export default function useApp() {
   };
 
   const handleStreamedMessage = (streamedMessage: StreamedMessage) => {
+    //throw new Error(JSON.stringify(streamedMessage));
+    //console.error(JSON.stringify(streamedMessage));
     let ceOld = console.error;
     console.error = () => {};
     try {
@@ -141,6 +143,7 @@ export default function useApp() {
   const handleStreamedDone = (streamedDone: StreamedDone) => {};
 
   const routeResponseToProperHandler = (payload: string) => {
+    //console.error(payload + "PL");
     const payloads = payload.split("\n").filter((p) => p.trim() !== "");
 
     if (payloads.length === 0) {
@@ -148,13 +151,16 @@ export default function useApp() {
     }
     var combinedPayload = "";
     for (const payload of payloads) {
-      combinedPayload += payload + "\n";
+      combinedPayload += payload;//+ "\n";
       var parsedPayload = {};
-      try {
+//      try {
         parsedPayload = JSON.parse(combinedPayload);
         combinedPayload = "";
-      } catch (parseError) { continue; }
+//      } catch (parseError) { continue; }
+      //throw new Error(JSON.stringify(parsedPayload));
+      //console.error(JSON.stringify(parsedPayload) + "RRPH");
       if (streamedMessageSchema.safeParse(parsedPayload).success) {
+        //throw new Error(JSON.stringify(parsedPayload));
         handleStreamedMessage(parsedPayload as StreamedMessage);
       } else if (streamedLoadingSchema.safeParse(parsedPayload).success) {
         handleStreamedLoading(parsedPayload as StreamedLoading);
@@ -174,12 +180,29 @@ export default function useApp() {
       throw new Error("No reader available");
     }
 
+    var payload = "";
+
     while (true) {
+      //console.error(payload);
       const { done, value } = await reader.read();
       if (done) break;
+      //if (new TextDecoder().decode(value) == "") continue;
+      try {
+        if(false && payload == "") {
+          const temp = JSON.parse(new TextDecoder().decode(value));
+          routeResponseToProperHandler(new TextDecoder().decode(value));
+          continue;
+        }
+      } catch(errorVal) { }
+          
 
-      const payload = new TextDecoder().decode(value);
-      routeResponseToProperHandler(payload);
+      payload += new TextDecoder().decode(value);
+
+      try {
+        //const temp = JSON.parse(payload);
+        routeResponseToProperHandler(payload);
+        payload = "";
+      } catch(errorVal) { }
     }
   };
 

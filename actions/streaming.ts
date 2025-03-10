@@ -62,9 +62,18 @@ export async function handleOpenAIStream({
     throw new Error("No stream response");
   }
   let responseBuffer: string = "";
-
+  let seenThink = false;
   for await (const chunk of streamedResponse) {
     responseBuffer += chunk.choices[0]?.delta.content ?? "";
+    //console.error(responseBuffer + "RB");
+    //throw new Error(responseBuffer);
+    if(!seenThink && !responseBuffer.includes("</think>")) {
+      if(responseBuffer.startsWith("<think>")) responseBuffer = responseBuffer.substring(7);
+    }
+    if(!seenThink && responseBuffer.includes("</think>")) {
+      responseBuffer = responseBuffer.substring(responseBuffer.indexOf("</think>") + 8);
+      seenThink = true;
+    }
     const streamedMessage: StreamedMessage = {
       type: "message",
       message: {
@@ -77,6 +86,7 @@ export async function handleOpenAIStream({
       new TextEncoder().encode(JSON.stringify(streamedMessage) + "\n")
     );
   }
+  console.error(responseBuffer);
   const endTime = Date.now();
   const streamDuration = endTime - startTime;
   console.log(`Done streaming OpenAI response in ${streamDuration / 1000}s`);

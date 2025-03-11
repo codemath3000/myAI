@@ -1,3 +1,3 @@
 # Read Me
-Welcome to Quanty, the quantitative finance interview preparation chatbot! Please note that this is the backup version; please see the other branch (dsbot) for the default version.
+Welcome to Quanty, the quantitative finance interview preparation chatbot! Please note that this is the backup version, available via oaibot.bsh.dev; please see the other branch (dsbot) for the default version, which is available via quanty.us.
 
